@@ -16,11 +16,13 @@ class Myo::Chamber
       conn = EventMachine::WebSocketClient.connect(@socket_url)
 
       conn.callback do
-        @callbacks_[:connected].call(self)
+        return unless @callbacks_[:connected]
+        instance_eval(&@callbacks_[:connected])
       end
 
       conn.errback do |e|
-        @callbacks_[:error].call(self)
+        return unless @callbacks_[:error]
+        instance_eval(e, &@callbacks_[:error])
       end
 
       conn.stream do |msg|
@@ -29,11 +31,13 @@ class Myo::Chamber
         event = JSON.parse(msg.data)[1]
         case event['type']
         when 'pose'
+          break unless @callbacks_[:pose]
           pose = event['pose']
-          @callbacks_[:pose].call(self, @pool_[:prev_pose], :off) if @pool_[:prev_pose]
-          @callbacks_[:pose].call(self, pose, :on)
+          instance_eval(@pool_[:prev_pose], :off, &@callbacks_[:pose]) if @pool_[:prev_pose]
+          instance_eval(pose, :on, &@callbacks_[:pose])
           @pool_[:prev_pose] = pose
         when 'orientation'
+          break unless @callbacks_[:periodic]
           e = OpenStruct.new({
             :accel => OpenStruct.new({
               :x => event['accelerometer'][0],
@@ -48,7 +52,7 @@ class Myo::Chamber
             :orientation => OpenStruct.new(event['orientation'])
           })
           @pool_[:latest_orientation] = e
-          @callbacks_[:periodic].call(self, e)
+          instance_eval(e, &@callbacks_[:periodic])
         end
       end
 

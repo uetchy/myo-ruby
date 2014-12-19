@@ -14,11 +14,11 @@ Myo.connect do |myo|
     puts "Myo connected!"
   end
 
-  myo.on :pose do |m, pose, edge|
+  myo.on :pose do |pose, edge|
     puts "#{pose}: #{edge}"
   end
 
-  myo.on :periodic do |m, orientation|
+  myo.on :periodic do |orientation|
     puts orientation.accel.x
   end
 end
