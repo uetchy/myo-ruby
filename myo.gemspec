@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Myo::VERSION
   spec.authors       = ["Yasuaki Uechi"]
   spec.email         = ["uetchy@randompaper.co"]
-  spec.summary       = %q{Connect Myo armband in Ruby with ease}
-  spec.description   = %q{Connect Myo armband in Ruby with ease}
+  spec.summary       = %q{Connect to Myo armband in Ruby}
+  spec.description   = %q{Connect to Myo armband in Ruby}
   spec.homepage      = ""
   spec.license       = "MIT"
 

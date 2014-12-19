@@ -1,6 +1,6 @@
 # Myo
 
-Connect Myo armband in Ruby with ease
+Connect to Myo armband in Ruby
 
 ## Installation
 
