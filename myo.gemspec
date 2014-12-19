@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["uetchy@randompaper.co"]
   spec.summary       = %q{Connect to Myo armband in Ruby}
   spec.description   = %q{Connect to Myo armband in Ruby}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/uetchy/myo-ruby"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
