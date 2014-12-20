@@ -1,28 +1,26 @@
-class Myo::Chamber
-  attr_accessor :callbacks_
-
+class Myo::Client
   def initialize(socket_url)
     @socket_url = socket_url
-    @callbacks_ = {}
-    @pool_      = {}
+    @__callbacks = {}
+    @__pool      = {}
   end
 
-  def getRoll
-    @pool_[:latest_orientation].accel.x
+  def on(event_name, &block)
+    @__callbacks[event_name.to_sym] = block
   end
 
   def start
     EM.run do
       conn = EventMachine::WebSocketClient.connect(@socket_url)
 
+      @__callbacks[:connected] &&
       conn.callback do
-        return unless @callbacks_[:connected]
-        instance_eval(&@callbacks_[:connected])
+        instance_eval(&@__callbacks[:connected])
       end
 
+      @__callbacks[:error] &&
       conn.errback do |e|
-        return unless @callbacks_[:error]
-        instance_eval(e, &@callbacks_[:error])
+        instance_eval(e, &@__callbacks[:error])
       end
 
       conn.stream do |msg|
@@ -31,13 +29,13 @@ class Myo::Chamber
         event = JSON.parse(msg.data)[1]
         case event['type']
         when 'pose'
-          break unless @callbacks_[:pose]
+          break unless @__callbacks[:pose]
           pose = event['pose']
-          instance_eval(@pool_[:prev_pose], :off, &@callbacks_[:pose]) if @pool_[:prev_pose]
-          instance_eval(pose, :on, &@callbacks_[:pose])
-          @pool_[:prev_pose] = pose
+          instance_eval(@__pool[:prev_pose], :off, &@__callbacks[:pose]) if @__pool[:prev_pose]
+          instance_eval(pose, :on, &@__callbacks[:pose])
+          @__pool[:prev_pose] = pose
         when 'orientation'
-          break unless @callbacks_[:periodic]
+          break unless @__callbacks[:periodic]
           e = OpenStruct.new({
             :accel => OpenStruct.new({
               :x => event['accelerometer'][0],
@@ -51,8 +49,8 @@ class Myo::Chamber
             }),
             :orientation => OpenStruct.new(event['orientation'])
           })
-          @pool_[:latest_orientation] = e
-          instance_eval(e, &@callbacks_[:periodic])
+          @__pool[:latest_orientation] = e
+          instance_eval(e, &@__callbacks[:periodic])
         end
       end
 
@@ -60,20 +58,5 @@ class Myo::Chamber
         EM::stop_event_loop
       end
     end
-  end
-end
-
-class Myo::Client
-  def initialize(socket_url)
-    @socket_url = socket_url
-    @chamber = Myo::Chamber.new(@socket_url)
-  end
-
-  def on(event_name, &block)
-    @chamber.callbacks_[event_name.to_sym] = block
-  end
-
-  def start
-    @chamber.start
   end
 end
