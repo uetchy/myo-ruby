@@ -26,23 +26,27 @@ class Myo::Client
   end
 
   # getOrientationWorld
-  def orientation_world()
+  def orientation()
     # Unit vector representing Myo's orientation. (Returns 3 values). Delimit return values as follows: x,y,z = myo.getOrientationWorld().
+    @__event_pool[:orientation].orientation
   end
 
   # getRoll
   def roll()
     # Get an angular value for Myo's orientation about its X axis, i.e. the wearer's arm. Positive roll indicates clockwise rotation (from the point of view of the wearer).
+    @__event_pool[:orientation].gyro.x
   end
 
   # getPitch
   def pitch()
     # Get an angular value for Myo's orientation about its Y axis. Positive pitch indicates the wearer moving their arm upwards, away from the ground.
+    @__event_pool[:orientation].gyro.y
   end
 
   # getYaw
   def yaw()
     # Get an angular value for Myo's orientation about its Z axis. Positive yaw indicates rotation to the wearer's right.
+    @__event_pool[:orientation].gyro.z
   end
 
   # getGyro
@@ -55,11 +59,6 @@ class Myo::Client
   def accel()
     # Acceleration of Myo along its X, Y and Z axes in its own reference frame. (Returns 3 values). Delimit return values as follows: x,y,z = myo.getAccel().
     @__event_pool[:orientation].accel
-  end
-
-  # getAccelWorld
-  def accel_world()
-    # Acceleration of Myo in the world reference frame. (Returns 3 values). Delimit return values as follows: x,y,z = myo.getAccel().
   end
 
   # setLockingPolicy
