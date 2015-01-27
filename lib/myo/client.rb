@@ -1,16 +1,33 @@
 class Myo::Client
+  MYO_VIBRATION_TYPES = {
+    :short => 0,
+    :medium => 1,
+    :long => 2
+  }
+
+  MYO_UNLOCK_TYPES = {
+    :timed => 0,
+    :hold => 1
+  }
+
   def initialize(socket_url)
-    @socket_url = socket_url
-    @__callbacks = {}
-    @__event_pool      = {}
+    @__socket_url = socket_url
+    @__callbacks  = {}
+    @__event_pool = {}
+    @__conn       = nil
   end
 
   def on(event_name, &block)
     @__callbacks[event_name.to_sym] = block
   end
 
+  def send_command(data)
+    @__conn.send(data.to_json)
+  end
+
   def vibrate(vibration_type)
-    # The type of vibration. One of "short", "medium", or "long".
+    vibration_int = MYO_VIBRATION_TYPES[vibration_type]
+    send_command({:command => :vibrate, :args => vibration_int})
   end
 
   # getArm
@@ -32,19 +49,19 @@ class Myo::Client
   end
 
   # getRoll
-  def roll()
+  def roll() # TODO:
     # Get an angular value for Myo's orientation about its X axis, i.e. the wearer's arm. Positive roll indicates clockwise rotation (from the point of view of the wearer).
     @__event_pool[:orientation].gyro.x
   end
 
   # getPitch
-  def pitch()
+  def pitch() # TODO:
     # Get an angular value for Myo's orientation about its Y axis. Positive pitch indicates the wearer moving their arm upwards, away from the ground.
     @__event_pool[:orientation].gyro.y
   end
 
   # getYaw
-  def yaw()
+  def yaw() # TODO:
     # Get an angular value for Myo's orientation about its Z axis. Positive yaw indicates rotation to the wearer's right.
     @__event_pool[:orientation].gyro.z
   end
@@ -62,7 +79,7 @@ class Myo::Client
   end
 
   # setLockingPolicy
-  def locking_policy=(locking_policy)
+  def locking_policy=(locking_policy) # TODO:
     # The new locking policy. Either "none" or "standard".
     # "none" : Don't use any locking mechanism; Myo is always unlocked. With this policy, the myo.unlock() and myo.lock() functions have no effect.
     # "standard" : Use Myo's built-in locking mechanism. This is the default.
@@ -71,20 +88,23 @@ class Myo::Client
   def unlock(unlock_type)
     # "timed" : Unlock for a fixed period of time, after which it will automatically re-lock.
     # "hold" : Unlock until a lock() command is explicitly issued.
+    unlock_int = MYO_UNLOCK_TYPES[unlock_type]
+    send_command({:command => :unlock, :args => unlock_int})
   end
 
   def lock()
     # Force Myo to re-lock immediately. Pose events will not be delivered while to the script while Myo is locked.
+    send_command({:command => :lock})
   end
 
   # isUnlocked
-  def unlocked?()
+  def unlocked?() # TODO:
     # true if Myo is currently unlocked, otherwise false.
     @__event_pool[:unlocked]
   end
 
   # notifyUserAction
-  def notify_user_action()
+  def notify_user_action() # TODO:
     # Notify the connected Myo that a user action was recognized. Will cause Myo to vibrate.
   end
 
@@ -101,20 +121,20 @@ class Myo::Client
 
   def start
     EM.run do
-      conn = EventMachine::WebSocketClient.connect(@socket_url)
+      @__conn = EventMachine::WebSocketClient.connect(@__socket_url)
 
       @__callbacks[:connection_established] &&
-      conn.callback do
+      @__conn.callback do
         instance_eval(&@__callbacks[:connection_established])
       end
 
       @__callbacks[:error] &&
-      conn.errback do |e|
+      @__conn.errback do |e|
         instance_eval(e, &@__callbacks[:error])
       end
 
-      conn.stream do |msg|
-        conn.close_connection if msg.data == "done"
+      @__conn.stream do |msg|
+        @__conn.close_connection if msg.data == "done"
 
         event = JSON.parse(msg.data)[1]
         case event['type']
@@ -161,7 +181,7 @@ class Myo::Client
         end
       end
 
-      conn.disconnect do
+      @__conn.disconnect do
         EM::stop_event_loop
       end
     end
