@@ -105,12 +105,12 @@ class Myo::Client
 
       @__callbacks[:connection_established] &&
       conn.callback do
-        instance_eval(&@__callbacks[:connection_established])
+        instance_exec(&@__callbacks[:connection_established])
       end
 
       @__callbacks[:error] &&
       conn.errback do |e|
-        instance_eval(e, &@__callbacks[:error])
+        instance_exec(e, &@__callbacks[:error])
       end
 
       conn.stream do |msg|
@@ -123,7 +123,7 @@ class Myo::Client
 
         when 'connected'
           break unless @__callbacks[:connected]
-          instance_eval(&@__callbacks[:connected])
+          instance_exec(&@__callbacks[:connected])
           @__event_pool[:connected] = event
 
         when 'arm_synced'
@@ -136,8 +136,8 @@ class Myo::Client
         when 'pose'
           break unless @__callbacks[:pose]
           pose = event['pose']
-          instance_eval(@__event_pool[:pose][:pose], :off, &@__callbacks[:pose]) if @__event_pool[:pose][:pose]
-          instance_eval(pose, :on, &@__callbacks[:pose])
+          instance_exec(@__event_pool[:pose][:pose], :off, &@__callbacks[:pose]) if @__event_pool[:pose][:pose]
+          instance_exec(pose, :on, &@__callbacks[:pose])
           @__event_pool[:pose] = event
 
         when 'orientation'
@@ -156,7 +156,7 @@ class Myo::Client
             :orientation => OpenStruct.new(event['orientation'])
           })
           @__event_pool[:orientation] = e
-          instance_eval(e, &@__callbacks[:periodic])
+          instance_exec(e, &@__callbacks[:periodic])
 
         end
       end
